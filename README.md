@@ -1,39 +1,60 @@
-# Οριζόντιο Repository/Aggregator Ανοικτών Μαθημάτων
-> Large-Scale ML εφαρμογή με React, Node.js και Apache Spark.
+# Backend
+> Τεχνολογίες: Node.js, Express, MongoDB & REST APIs
 
-## Δομή
-* **Backend**: Node.js API server.
-* **Frontend**: React-based web app (Vite).
-* **Spark**: Κώδικες για τις βασικές λειτουργίες ML (Similarity & Recommendations).
+Το αρχείο `sever.js` είναι ο κεντρικός server της εφαρμογής και χρησιμοποιώντας.
 
-## Quick Start
+## 1. Ρυθμίσεις και σύνδεση με τη βάση
 
-### 1. Απαραίτητα Προγράμματα
-Για να τρέξεις το project χρειάζεται να έχεις εγκατεστημένα:
+Το URL της βάσης είναι:
 
-* [Node.js](https://nodejs.org/en/download)
-* [React](https://www.geeksforgeeks.org/installation-guide/how-to-install-reactjs-on-windows/)
-* [Spark](https://spark.apache.org/docs/latest/api/python/getting_started/install.html)
-* [MongDB]()
+``const MONGO_URI = 'mongodb://127.0.0.1:27017/coursesApplication' ``
 
-### 2. Προετοιμασία Βάσης Δεδομένων (MongoDB)
-Πριν ξεκινήσεις τους servers, δημιούργησε μια βάση δεδομένων:
-* **Όνομα Βάσης:** `coursesApplication`
-* **Collections:**
-  1. `courses`
-  2. `similarCourses`
+Η σύνδεση γίνεται:
+```
+mongoose.connect(MONGO_URI)
+.then(() => console.log('MongoDB connected successfully'))
+.catch(err => console.error('MongoDB connection error:', err));
+```
 
-### 3. Εκκίνηση Node.js server
-Για να τρέξεις τον Node.js server ανοίγεις το Terminal, κατευθύνεσε στον φάκελο Backend που είναι το αρχείο server.js και τρέχεις την εντολή: `node server run`
+## 2. API Endpoints
 
-### 4. Εκκίνηση React
+Ο server ακολουθεί την αρχιτεκτονική REST API. Επιστρέφει δεδομένα σε μορφή JSON.
 
-Για να δουλέψει η React, πρέπει να τρέξεις τον Vite server. Για να γίνει αυτό, ανοίγεις Terminal, κατευθύνεσε στον φάκελο Frontend και τρέχεις την εντολή: `npm run dev` 
+### 2.1 Αναζήτηση & Φιλτράρισμα Μαθημάτων
+Επιστρέφει λίστα μαθημάτων με σελιδοποίηση (pagination).
 
-### 5. Εκτέλεση αρχείων Spark
+Endpoint: `GET /api/courses`
 
-Για να τρέξεις τα αρχεία κώδικα σε Spark, θα χρειαστείς:
-*  **IDE** (VS Code, PyCharm) ή
-* **Terminal** πηγαίνωντας στον φάκελο Spark και τρέχοντας της εντολές
-    1. `spark-submit saving_to_mongodb.py`
-    2. `spark-submit similarity.py`
+Παράμετρος | Τύπος | Περιγραφή
+--- | --- | ---
+page  | Query |Ο αριθμός σελίδας (Default: 1)
+limit |Query  |Αποτελέσματα ανά σελίδα (Default: 20)
+search  | Query |Αναζήτηση στον τίτλο (Keyword)
+category|Query  |Φιλτράρισμα ανά κατηγορία
+level |Query  |Φιλτράρισμα ανά επίπεδο (Beginner, etc.)"
+language |Query |Φιλτράρισμα ανά γλώσσα
+
+### 2.2 Λίστα Κατηγοριών
+Επιστρέφει όλες τις μοναδικές κατηγορίες που υπάρχουν στη βάση (για να γεμίσουν τα φίλτρα στο Frontend).
+
+Endpoint: `GET /api/categories`
+
+### 2.3 Λεπτομέρειες Μαθήματος
+Επιστρέφει αναλυτικά τα στοιχεία ενός συγκεκριμένου μαθήματος βάσει του ID του.
+
+Endpoint: `GET /api/courses/:id`
+
+Παράμετρος  |Τύπος  |Περιγραφή
+--- | --- | ---
+:id	|Path |Το μοναδικό _id του μαθήματος στη MongoDB
+
+### 2.4 Παρόμοια Μαθήματα (ML Recommendation)
+Επιστρέφει τα προτεινόμενα/παρόμοια μαθήματα, όπως έχουν υπολογιστεί από τον Spark αλγόριθμο και έχουν αποθηκευτεί στο collection `similarCourses`.
+
+Endpoint: `GET /api/courses/:id/similar`
+
+## 3. Πως λειτουργεί
+1. O χρήστης κάνει μια ενέργεια στο React Frontend (π.χ. αναζήτηση).
+2. Το Frontend στέλνει ένα HTTP Request στο αντίστοιχο Endpoint του Backend.
+3. Ο Server (μέσω Mongoose) εκτελεί το Query στη βάση δεδομένων MongoDB.
+4. Τα αποτελέσματα επιστρέφονται ως JSON στο Frontend για απεικόνιση.
